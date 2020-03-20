@@ -61,29 +61,34 @@ public class NamesrvController {
     private FileWatchService fileWatchService;
 
     public NamesrvController(NamesrvConfig namesrvConfig, NettyServerConfig nettyServerConfig) {
+        //nameserv参数配置
         this.namesrvConfig = namesrvConfig;
+        //netty的参数配置
         this.nettyServerConfig = nettyServerConfig;
         this.kvConfigManager = new KVConfigManager(this);
+        //初始化RouteInfoManager
         this.routeInfoManager = new RouteInfoManager();
+        //监听客户端连接(Channel)的变化，通知RouteInfoManager检查broker是否有变化
         this.brokerHousekeepingService = new BrokerHousekeepingService(this);
         this.configuration = new Configuration(
             log,
             this.namesrvConfig, this.nettyServerConfig
         );
+        //Nameserv的配置参数会保存到磁盘文件中
         this.configuration.setStorePathFromConfig(this.namesrvConfig, "configStorePath");
     }
 
     public boolean initialize() {
-
+        //1、初始化KVConfigManager
         this.kvConfigManager.load();
-
+        //2、初始化netty server
         this.remotingServer = new NettyRemotingServer(this.nettyServerConfig, this.brokerHousekeepingService);
-
+        //3、客户端请求处理的线程池
         this.remotingExecutor =
             Executors.newFixedThreadPool(nettyServerConfig.getServerWorkerThreads(), new ThreadFactoryImpl("RemotingExecutorThread_"));
-
+        //4、注册DefaultRequestProcessor，所有的客户端请求都会转给这个Processor来处理
         this.registerProcessor();
-
+        //5、启动定时调度，每10秒钟扫描所有Broker，检查存活状态
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 
             @Override
@@ -91,7 +96,7 @@ public class NamesrvController {
                 NamesrvController.this.routeInfoManager.scanNotActiveBroker();
             }
         }, 5, 10, TimeUnit.SECONDS);
-
+        //6、日志打印的调度器，定时打印kvConfigManager的内容
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 
             @Override
@@ -99,7 +104,7 @@ public class NamesrvController {
                 NamesrvController.this.kvConfigManager.printAllPeriodically();
             }
         }, 1, 10, TimeUnit.MINUTES);
-
+        //7、监听ssl证书文件变化，
         if (TlsSystemConfig.tlsMode != TlsMode.DISABLED) {
             // Register a listener to reload SslContext
             try {
@@ -154,7 +159,7 @@ public class NamesrvController {
 
     public void start() throws Exception {
         this.remotingServer.start();
-
+        //监听ssl文件变化，可以实时更新证书
         if (this.fileWatchService != null) {
             this.fileWatchService.start();
         }
