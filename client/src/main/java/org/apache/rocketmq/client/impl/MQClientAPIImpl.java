@@ -214,7 +214,9 @@ public class MQClientAPIImpl {
 
     public String fetchNameServerAddr() {
         try {
-            String addrs = this.topAddressing.fetchNSAddr();
+            //TODO 暂时注释掉
+            //String addrs = this.topAddressing.fetchNSAddr();
+            String addrs = "127.0.0.1:9876";
             if (addrs != null) {
                 if (!addrs.equals(this.nameSrvAddr)) {
                     log.info("name server address changed, old=" + this.nameSrvAddr + ", new=" + addrs);

@@ -230,18 +230,24 @@ public class MQClientInstance {
                 case CREATE_JUST:
                     this.serviceState = ServiceState.START_FAILED;
                     // If not specified,looking address from name server
+                    // 1、如果NameservAddr为空，尝试从http server获取nameserv的地址
                     if (null == this.clientConfig.getNamesrvAddr()) {
                         this.mQClientAPIImpl.fetchNameServerAddr();
                     }
                     // Start request-response channel
+                    // 2、启动MQClientAPIImpl，初始化NettyClient
                     this.mQClientAPIImpl.start();
                     // Start various schedule tasks
+                    // 3、开启Client的定时任务
                     this.startScheduledTask();
                     // Start pull service
+                    // 4、Start pull service,开始处理PullRequest
                     this.pullMessageService.start();
                     // Start rebalance service
+                    // 5、Start rebalance service
                     this.rebalanceService.start();
                     // Start push service
+                    //6、启动Client内置的producer
                     this.defaultMQProducer.getDefaultMQProducerImpl().start(false);
                     log.info("the client factory [{}] start OK", this.clientId);
                     this.serviceState = ServiceState.RUNNING;
@@ -256,6 +262,7 @@ public class MQClientInstance {
 
     private void startScheduledTask() {
         if (null == this.clientConfig.getNamesrvAddr()) {
+            //获取nameserv地址，就是重复的做第1步，这样就可以动态切换nameserv的地址
             this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 
                 @Override
@@ -268,7 +275,7 @@ public class MQClientInstance {
                 }
             }, 1000 * 10, 1000 * 60 * 2, TimeUnit.MILLISECONDS);
         }
-
+        //从nameserv更新topicRouteInfo
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 
             @Override
@@ -280,7 +287,7 @@ public class MQClientInstance {
                 }
             }
         }, 10, this.clientConfig.getPollNameServerInterval(), TimeUnit.MILLISECONDS);
-
+        //清除下线的broker  发送心跳到broker
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 
             @Override

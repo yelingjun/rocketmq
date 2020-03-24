@@ -25,10 +25,11 @@ import org.apache.rocketmq.common.message.MessageQueue;
 public class MQFaultStrategy {
     private final static InternalLogger log = ClientLogger.getLog();
     private final LatencyFaultTolerance<String> latencyFaultTolerance = new LatencyFaultToleranceImpl();
-
+    // 是否启用延迟故障功能
     private boolean sendLatencyFaultEnable = false;
-
+    // 定义了延迟的几个级别，单位ms
     private long[] latencyMax = {50L, 100L, 550L, 1000L, 2000L, 3000L, 15000L};
+    // 定义了故障后的不可用时长，单位ms，与延迟级别相关
     private long[] notAvailableDuration = {0L, 0L, 30000L, 60000L, 120000L, 180000L, 600000L};
 
     public long[] getNotAvailableDuration() {
@@ -56,20 +57,24 @@ public class MQFaultStrategy {
     }
 
     public MessageQueue selectOneMessageQueue(final TopicPublishInfo tpInfo, final String lastBrokerName) {
+        //开启了延时容错
         if (this.sendLatencyFaultEnable) {
             try {
+                //1、首先获取上次使用的Queue index+1
                 int index = tpInfo.getSendWhichQueue().getAndIncrement();
                 for (int i = 0; i < tpInfo.getMessageQueueList().size(); i++) {
                     int pos = Math.abs(index++) % tpInfo.getMessageQueueList().size();
                     if (pos < 0)
                         pos = 0;
+                    //2、找到index对应的queue
                     MessageQueue mq = tpInfo.getMessageQueueList().get(pos);
+                    //3、如果queue对应的broker可用，则使用该broker
                     if (latencyFaultTolerance.isAvailable(mq.getBrokerName())) {
                         if (null == lastBrokerName || mq.getBrokerName().equals(lastBrokerName))
                             return mq;
                     }
                 }
-
+                //4、如果上一步没找个合适的broker，则从所有的broker中选择一个相对合适的，并且broker是可写的。
                 final String notBestBroker = latencyFaultTolerance.pickOneAtLeast();
                 int writeQueueNums = tpInfo.getQueueIdByBroker(notBestBroker);
                 if (writeQueueNums > 0) {
@@ -85,10 +90,10 @@ public class MQFaultStrategy {
             } catch (Exception e) {
                 log.error("Error occurred when selecting message queue", e);
             }
-
+            //5、如果以上都没找到，则直接按顺序选择下一个
             return tpInfo.selectOneMessageQueue();
         }
-
+        //6、未开启延时容错，直接按顺序选下一个
         return tpInfo.selectOneMessageQueue(lastBrokerName);
     }
 
