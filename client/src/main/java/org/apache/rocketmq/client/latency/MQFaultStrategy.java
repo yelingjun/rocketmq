@@ -74,7 +74,7 @@ public class MQFaultStrategy {
                             return mq;
                     }
                 }
-                //4、如果上一步没找个合适的broker，则从所有的broker中选择一个相对合适的，并且broker是可写的。
+                //4、如果上一步没找到合适的broker，则从所有的broker中选择一个相对合适的，并且broker是可写的。
                 final String notBestBroker = latencyFaultTolerance.pickOneAtLeast();
                 int writeQueueNums = tpInfo.getQueueIdByBroker(notBestBroker);
                 if (writeQueueNums > 0) {
