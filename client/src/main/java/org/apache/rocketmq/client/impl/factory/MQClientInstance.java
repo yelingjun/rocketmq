@@ -142,11 +142,11 @@ public class MQClientInstance {
         this.clientId = clientId;
 
         this.mQAdminImpl = new MQAdminImpl(this);
-
+        //1、Pull请求服务，异步发送请求到broker并负责将返回结果放到缓存队列
         this.pullMessageService = new PullMessageService(this);
-
+        //2、定时或者被触发做subscribe queue的re-balance
         this.rebalanceService = new RebalanceService(this);
-
+        //3、初始化一个自用的producer，`CLIENT_INNER_PRODUCER` 主要用于在消费失败或者超时后发送重试的消息给broker
         this.defaultMQProducer = new DefaultMQProducer(MixAll.CLIENT_INNER_PRODUCER_GROUP);
         this.defaultMQProducer.resetClientConfig(clientConfig);
 
@@ -242,9 +242,11 @@ public class MQClientInstance {
                     this.startScheduledTask();
                     // Start pull service
                     // 4、Start pull service,开始处理PullRequest
+                    //实例变量pullMessageService的类型是PullMessageService
                     this.pullMessageService.start();
                     // Start rebalance service
                     // 5、Start rebalance service
+                    //实例变量rebalanceService的类型是RebalanceService
                     this.rebalanceService.start();
                     // Start push service
                     //6、启动Client内置的producer
@@ -300,7 +302,7 @@ public class MQClientInstance {
                 }
             }
         }, 1000, this.clientConfig.getHeartbeatBrokerInterval(), TimeUnit.MILLISECONDS);
-
+        //保存消费进度，广播消息存在本地，集群消息上传到所有的broker
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 
             @Override
@@ -312,7 +314,7 @@ public class MQClientInstance {
                 }
             }
         }, 1000 * 10, this.clientConfig.getPersistConsumerOffsetInterval(), TimeUnit.MILLISECONDS);
-
+        //对于`PushConsumer`，根据负载调整本地处理消息的线程池corePool大小
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 
             @Override

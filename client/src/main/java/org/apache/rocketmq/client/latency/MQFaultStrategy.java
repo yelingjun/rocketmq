@@ -99,7 +99,9 @@ public class MQFaultStrategy {
 
     public void updateFaultItem(final String brokerName, final long currentLatency, boolean isolation) {
         if (this.sendLatencyFaultEnable) {
+            //1、根据发送结果，计算broker不可用时长
             long duration = computeNotAvailableDuration(isolation ? 30000 : currentLatency);
+            //2、更新Broker不可用时长
             this.latencyFaultTolerance.updateFaultItem(brokerName, currentLatency, duration);
         }
     }

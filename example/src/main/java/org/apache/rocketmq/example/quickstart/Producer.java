@@ -50,6 +50,12 @@ public class Producer {
          */
 
         producer.setNamesrvAddr("127.0.0.1:9876");
+
+        //获取主题路由信息的间隔时间
+        producer.setPollNameServerInterval(1000*1000);
+        //开启延时容错 这个属性会影响Queue的负载均衡。分别实现轮询和可用性轮询
+        producer.setSendLatencyFaultEnable(true);
+
         producer.start();
 
         for (int i = 0; i < 1; i++) {
