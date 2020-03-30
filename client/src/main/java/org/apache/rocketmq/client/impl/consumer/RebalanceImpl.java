@@ -275,6 +275,9 @@ public abstract class RebalanceImpl {
                     List<MessageQueue> mqAll = new ArrayList<MessageQueue>();
                     mqAll.addAll(mqSet);
                     //3、将MQ和cid都排好序
+                    //mqAll是topic对应的所有queue  cidAll是同一个group所有的consumer id
+                    //之所有对mqAll和cidAll进行排序，是为了所有的consumer看到的queue和consumer的顺序都是一样的
+                    //防止同一个消费队列不会被多个消费者分配
                     Collections.sort(mqAll);
                     Collections.sort(cidAll);
                     //4、按照初始化是指定的分配策略，获取分配的MQ列表
@@ -398,7 +401,7 @@ public abstract class RebalanceImpl {
                 }
             }
         }
-
+        //分发pull request到PullMessageService,拉取消息
         this.dispatchPullRequest(pullRequestList);
 
         return changed;

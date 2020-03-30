@@ -248,6 +248,7 @@ public class MQClientInstance {
                     // Start rebalance service
                     // 5、Start rebalance service
                     //实例变量rebalanceService的类型是RebalanceService
+                    //重新调整和分配queue
                     this.rebalanceService.start();
                     // Start push service
                     //6、启动Client内置的producer
