@@ -584,8 +584,7 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner {
                 if (this.defaultMQPushConsumer.getMessageModel() == MessageModel.CLUSTERING) {
                     this.defaultMQPushConsumer.changeInstanceNameToPID();
                 }
-                //4、新建一个MQClientInstance,客户端管理类，所有的i/o类操作由它管理
-                //缓存客户端和topic信息，各种service
+                //4、新建一个MQClientInstance,客户端管理类，所有的i/o类操作由它管理  缓存客户端和topic信息，各种service
                 //一个进程只有一个实例
                 this.mQClientFactory = MQClientManager.getInstance().getOrCreateMQClientInstance(this.defaultMQPushConsumer, this.rpcHook);
 
