@@ -240,6 +240,7 @@ public class MQClientInstance {
                     // Start various schedule tasks
                     // 3、开启Client的定时任务
                     this.startScheduledTask();
+                    /*******************下面的代码都是为Consumer准备的*********************************/
                     // Start pull service
                     // 4、Start pull service,开始处理PullRequest
                     //实例变量pullMessageService的类型是PullMessageService
